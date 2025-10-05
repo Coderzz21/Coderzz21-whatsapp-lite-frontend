@@ -1,0 +1,10 @@
+/* Basic styling */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+input, button {
+  padding: 5px;
+  margin: 2px;
+}
