@@ -10,7 +10,7 @@ export default function ChatBox({ username }) {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const backendURL = "http://localhost:4000"; // Replace with Render backend URL
+        const backendURL = "https://coderzz21-whatsapp-lite-backend-1.onrender.com"; // Replace with Render backend URL
         const res = await fetch(`${backendURL}/messages`);
         const data = await res.json();
         setChat(data); // load past messages
