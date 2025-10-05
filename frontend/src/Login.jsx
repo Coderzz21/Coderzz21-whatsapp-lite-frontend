@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const BACKEND_URL = "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
+
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -7,13 +9,22 @@ export default function Login({ onLogin }) {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:4000/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    if (res.ok) onLogin(username);
-    else setError("Invalid credentials");
+    try {
+      const res = await fetch(`${BACKEND_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (res.ok) {
+        onLogin(username);
+      } else {
+        setError("Invalid credentials");
+      }
+    } catch (err) {
+      setError("Cannot connect to server");
+      console.error(err);
+    }
   };
 
   return (
