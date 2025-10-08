@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./Login.css";
 
 const BACKEND_URL = "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
 
@@ -28,23 +29,38 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: 100 }}>
-      <h2>Login to WhatsApp Lite</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        /><br /><br />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        /><br /><br />
-        <button type="submit">Login</button>
-      </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-header">
+          <div className="logo">WL</div>
+          <div>
+            <h3 className="login-title">Message ME</h3>
+            <div className="login-sub">Sign in to continue to the chat</div>
+          </div>
+        </div>
+
+        <form className="login-form" onSubmit={handleLogin}>
+          <div className="form-row">
+            <input
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+
+          <div className="form-row">
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button className="submit-btn" type="submit">Login</button>
+          {error && <div className="error">{error}</div>}
+        </form>
+      </div>
     </div>
   );
 }
