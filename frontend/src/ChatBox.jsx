@@ -13,13 +13,10 @@ export default function ChatBox({ username }) {
   const [file, setFile] = useState(null);
   const endRef = useRef();
 
-  // ✅ Auto-detect backend URL (Render or Localhost)
-  const backendURL =
-    window.location.hostname === "localhost"
-      ? "http://localhost:4000"
-      : "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
+  // ✅ Render backend URL only
+  const backendURL = "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
 
-  // ===== Fetch messages & listen for live updates =====
+  // ===== Fetch messages & listen for new ones =====
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -32,11 +29,10 @@ export default function ChatBox({ username }) {
     };
 
     fetchMessages();
-
     const handleMessage = (data) => setChat((prev) => [...prev, data]);
     socket.on("receive_message", handleMessage);
     return () => socket.off("receive_message", handleMessage);
-  }, [backendURL]);
+  }, []);
 
   // ===== Send text message =====
   const sendMessage = async () => {
@@ -64,12 +60,12 @@ export default function ChatBox({ username }) {
     }
   };
 
-  // ===== Auto-scroll to bottom =====
+  // ===== Auto-scroll =====
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  // ===== Render text, image, video, or file =====
+  // ===== Display message content =====
   const renderMessageContent = (msg) => {
     if (msg.type === "file") {
       const url = msg.message;
@@ -91,29 +87,20 @@ export default function ChatBox({ username }) {
   return (
     <div className="chat-wrapper">
       <div className="chat-card">
-        {/* ===== Header ===== */}
         <div className="chat-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="user-avatar">
-              {username.charAt(0).toUpperCase()}
-            </div>
+            <div className="user-avatar">{username.charAt(0).toUpperCase()}</div>
             <div className="chat-title">Chat as {username}</div>
           </div>
         </div>
 
-        {/* ===== Chat Body ===== */}
         <div className="chat-body">
           <div className="messages">
             {chat.map((msg, i) => {
               const isMe = msg.sender === username;
               return (
-                <div
-                  key={i}
-                  className={`msg-row ${isMe ? "outgoing" : "incoming"}`}
-                >
-                  <div
-                    className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}
-                  >
+                <div key={i} className={`msg-row ${isMe ? "outgoing" : "incoming"}`}>
+                  <div className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}>
                     {renderMessageContent(msg)}
                   </div>
                   <div className="meta">
@@ -126,7 +113,6 @@ export default function ChatBox({ username }) {
           </div>
         </div>
 
-        {/* ===== Input Footer ===== */}
         <div className="chat-footer">
           <div className="input-area">
             <textarea
@@ -149,9 +135,7 @@ export default function ChatBox({ username }) {
               style={{ display: "none" }}
               onChange={(e) => setFile(e.target.files[0])}
             />
-            <label htmlFor="file-upload" className="upload-label">
-              📎
-            </label>
+            <label htmlFor="file-upload" className="upload-label">📎</label>
             <button
               className={`send-btn ${sending ? "sending" : ""}`}
               onClick={file ? sendFile : sendMessage}
