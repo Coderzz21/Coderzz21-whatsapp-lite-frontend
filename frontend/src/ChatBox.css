@@ -259,3 +259,21 @@
     min-height: 48px;
   }
 }
+.emoji-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #075e54;
+  transition: transform 0.2s;
+}
+.emoji-btn:hover {
+  transform: scale(1.2);
+}
+
+.emoji-picker-container {
+  position: absolute;
+  bottom: 60px;
+  right: 10px;
+  z-index: 1000;
+}

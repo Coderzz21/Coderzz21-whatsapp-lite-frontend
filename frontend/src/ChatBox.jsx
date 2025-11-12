@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { socket } from "./socket";
+import Picker from "emoji-picker-react"; // 🆕 Emoji picker
 import "./ChatBox.css";
 
 function formatTimestamp(ts) {
@@ -11,6 +12,7 @@ export default function ChatBox({ username }) {
   const [chat, setChat] = useState([]);
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // 🆕 toggle emoji picker
   const endRef = useRef();
 
   // ✅ Render backend URL only
@@ -65,6 +67,12 @@ export default function ChatBox({ username }) {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
+  // ===== Handle emoji click =====
+  const handleEmojiClick = (emojiData) => {
+    setMessage((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
   // ===== Display message content =====
   const renderMessageContent = (msg) => {
     if (msg.type === "file") {
@@ -89,7 +97,9 @@ export default function ChatBox({ username }) {
       <div className="chat-card">
         <div className="chat-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="user-avatar">{username.charAt(0).toUpperCase()}</div>
+            <div className="user-avatar">
+              {username.charAt(0).toUpperCase()}
+            </div>
             <div className="chat-title">Chat as {username}</div>
           </div>
         </div>
@@ -99,8 +109,13 @@ export default function ChatBox({ username }) {
             {chat.map((msg, i) => {
               const isMe = msg.sender === username;
               return (
-                <div key={i} className={`msg-row ${isMe ? "outgoing" : "incoming"}`}>
-                  <div className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}>
+                <div
+                  key={i}
+                  className={`msg-row ${isMe ? "outgoing" : "incoming"}`}
+                >
+                  <div
+                    className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}
+                  >
                     {renderMessageContent(msg)}
                   </div>
                   <div className="meta">
@@ -128,14 +143,30 @@ export default function ChatBox({ username }) {
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
+            {/* 🆕 Emoji picker button */}
+            <button
+              className="emoji-btn"
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+            >
+              😀
+            </button>
+            {showEmojiPicker && (
+              <div className="emoji-picker-container">
+                <Picker onEmojiClick={handleEmojiClick} />
+              </div>
+            )}
+
+            {/* File Upload + Send */}
             <input
               type="file"
               id="file-upload"
               style={{ display: "none" }}
               onChange={(e) => setFile(e.target.files[0])}
             />
-            <label htmlFor="file-upload" className="upload-label">📎</label>
+            <label htmlFor="file-upload" className="upload-label">
+              📎
+            </label>
             <button
               className={`send-btn ${sending ? "sending" : ""}`}
               onClick={file ? sendFile : sendMessage}
