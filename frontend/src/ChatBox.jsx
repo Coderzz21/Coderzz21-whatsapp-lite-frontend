@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { socket } from "./socket";
-import Picker from "emoji-picker-react"; // 🆕 Emoji picker
-import "./ChatBox.css";
+import Picker from "emoji-picker-react"; // ✅ keep this
+import "./ChatBox.css"; // ✅ keep your custom styles
 
 function formatTimestamp(ts) {
   return ts || "";
@@ -12,10 +12,10 @@ export default function ChatBox({ username }) {
   const [chat, setChat] = useState([]);
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // 🆕 toggle emoji picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const endRef = useRef();
 
-  // ✅ Render backend URL only
+  // ✅ Hosted Render backend only
   const backendURL = "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
 
   // ===== Fetch messages & listen for new ones =====
@@ -67,13 +67,13 @@ export default function ChatBox({ username }) {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  // ===== Handle emoji click =====
+  // ===== Add emoji to message =====
   const handleEmojiClick = (emojiData) => {
     setMessage((prev) => prev + emojiData.emoji);
     setShowEmojiPicker(false);
   };
 
-  // ===== Display message content =====
+  // ===== Render message content =====
   const renderMessageContent = (msg) => {
     if (msg.type === "file") {
       const url = msg.message;
@@ -95,27 +95,22 @@ export default function ChatBox({ username }) {
   return (
     <div className="chat-wrapper">
       <div className="chat-card">
+        {/* ===== Header ===== */}
         <div className="chat-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="user-avatar">
-              {username.charAt(0).toUpperCase()}
-            </div>
+            <div className="user-avatar">{username.charAt(0).toUpperCase()}</div>
             <div className="chat-title">Chat as {username}</div>
           </div>
         </div>
 
+        {/* ===== Chat Body ===== */}
         <div className="chat-body">
           <div className="messages">
             {chat.map((msg, i) => {
               const isMe = msg.sender === username;
               return (
-                <div
-                  key={i}
-                  className={`msg-row ${isMe ? "outgoing" : "incoming"}`}
-                >
-                  <div
-                    className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}
-                  >
+                <div key={i} className={`msg-row ${isMe ? "outgoing" : "incoming"}`}>
+                  <div className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}>
                     {renderMessageContent(msg)}
                   </div>
                   <div className="meta">
@@ -128,6 +123,7 @@ export default function ChatBox({ username }) {
           </div>
         </div>
 
+        {/* ===== Input Footer ===== */}
         <div className="chat-footer">
           <div className="input-area">
             <textarea
@@ -143,30 +139,35 @@ export default function ChatBox({ username }) {
             />
           </div>
 
+          {/* ===== Emoji Picker Toggle ===== */}
           <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
-            {/* 🆕 Emoji picker button */}
             <button
-              className="emoji-btn"
-              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              style={{
+                fontSize: "22px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+              }}
             >
-              😀
+              😊
             </button>
             {showEmojiPicker && (
-              <div className="emoji-picker-container">
+              <div style={{ position: "absolute", bottom: "60px", right: "0" }}>
                 <Picker onEmojiClick={handleEmojiClick} />
               </div>
             )}
 
-            {/* File Upload + Send */}
+            {/* ===== File Upload ===== */}
             <input
               type="file"
               id="file-upload"
               style={{ display: "none" }}
               onChange={(e) => setFile(e.target.files[0])}
             />
-            <label htmlFor="file-upload" className="upload-label">
-              📎
-            </label>
+            <label htmlFor="file-upload" className="upload-label">📎</label>
+
+            {/* ===== Send Button ===== */}
             <button
               className={`send-btn ${sending ? "sending" : ""}`}
               onClick={file ? sendFile : sendMessage}
