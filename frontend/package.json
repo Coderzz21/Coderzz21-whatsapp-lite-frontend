@@ -4,12 +4,15 @@
   "private": true,
   "homepage": ".",
   "dependencies": {
-    "emoji-picker-react": "^4.4.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
     "socket.io-client": "^4.8.3",
     "web-vitals": "^4.2.3"
+  },
+  "devDependencies": {
+    "baseline-browser-mapping": "^2.9.11",
+    "eslint-config-react-app": "^7.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -34,7 +37,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {}
+  }
 }
-
