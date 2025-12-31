@@ -23,17 +23,34 @@ export default function ChatBox({ username }) {
     const fetchMessages = async () => {
       try {
         const res = await fetch(`${backendURL}/messages`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setChat(data);
       } catch (err) {
         console.error("Failed to fetch messages:", err);
+        // Retry after 3 seconds
+        setTimeout(fetchMessages, 3000);
       }
     };
 
     fetchMessages();
+    
     const handleMessage = (data) => setChat((prev) => [...prev, data]);
+    const handleConnect = () => console.log("✅ Connected to server");
+    const handleDisconnect = () => console.log("❌ Disconnected from server");
+    const handleConnectError = (err) => console.error("Connection error:", err);
+
     socket.on("receive_message", handleMessage);
-    return () => socket.off("receive_message", handleMessage);
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+    
+    return () => {
+      socket.off("receive_message", handleMessage);
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+    };
   }, []);
 
   // ===== Send text message =====
@@ -41,9 +58,17 @@ export default function ChatBox({ username }) {
     if (!message.trim()) return;
     setSending(true);
     try {
+      if (!socket.connected) {
+        alert("Connecting to server... Please try again");
+        setSending(false);
+        return;
+      }
       socket.emit("send_message", { sender: username, message, type: "text" });
       setMessage("");
       await new Promise((r) => setTimeout(r, 200));
+    } catch (err) {
+      console.error("Send error:", err);
+      alert("Failed to send message");
     } finally {
       setSending(false);
     }
@@ -52,13 +77,25 @@ export default function ChatBox({ username }) {
   // ===== Send file =====
   const sendFile = async () => {
     if (!file) return;
+    setSending(true);
     const formData = new FormData();
     formData.append("file", file);
     try {
-      await fetch(`${backendURL}/upload`, { method: "POST", body: formData });
+      if (!socket.connected) {
+        alert("Connecting to server... Please try again");
+        return;
+      }
+      const res = await fetch(`${backendURL}/upload`, { 
+        method: "POST", 
+        body: formData 
+      });
+      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
       setFile(null);
     } catch (err) {
       console.error("File upload error:", err);
+      alert("Failed to upload file");
+    } finally {
+      setSending(false);
     }
   };
 
