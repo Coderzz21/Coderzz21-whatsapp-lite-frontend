@@ -1,7 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import { socket } from "./socket";
-import Picker from "emoji-picker-react"; // ✅ keep this
+// Removed online picker; using local `EMOJIS` constant only
 import "./ChatBox.css"; // ✅ keep your custom styles
+
+// Fallback constant emoji list (used when online picker is unavailable)
+const EMOJIS = [
+  '😊','😂','❤️','👍','🎉','🔥','💯','✨','🙏','👏','💪','🎯',
+  '😃','😄','😁','😆','😉','😍','😘','😎','🤩','🤗','🤔','😅',
+  '😇','🤠','🤡','🤖','😴','😪','😵','🤯','😬','😐','😶','🙄',
+  '😤','😡','😳','🥳','🤤','😜','😝','🤪','😺','😸','😹','😻',
+  '💥','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕',
+  '💞','💓','💗','💖','💘','💝','🌟','🎶','🎵','🎧','🎤','🎬',
+  '🍕','🍔','🍟','🌮','🍣','🍩','🍪','☕','🍺','🍷','🥂','🍾',
+  '🌞','🌝','⭐','🌈','⚡','❄️','☔','🌊','🍀','🌹','🌺','🌸',
+  '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮',
+  '🚗','🚀','✈️','⛵','🏠','📱','💻','🔒','🔑','📷','💡','🔔',
+  '✅','❌','➕','➖','➡️','⬅️','🔁','🔄','♻️','🔍','🔔','📌'
+];
 
 function formatTimestamp(ts) {
   return ts || "";
@@ -105,8 +120,8 @@ export default function ChatBox({ username }) {
   }, [chat]);
 
   // ===== Add emoji to message =====
-  const handleEmojiClick = (emojiData) => {
-    setMessage((prev) => prev + emojiData.emoji);
+  const insertEmoji = (emojiChar) => {
+    setMessage((prev) => prev + emojiChar);
     setShowEmojiPicker(false);
   };
 
@@ -190,8 +205,46 @@ export default function ChatBox({ username }) {
               😊
             </button>
             {showEmojiPicker && (
-              <div style={{ position: "absolute", bottom: "60px", right: "0" }}>
-                <Picker onEmojiClick={handleEmojiClick} />
+              <div style={{ position: "absolute", bottom: "60px", right: "0", width: 340, zIndex: 50 }}>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(8, 30px)",
+                  gap: 6,
+                  padding: 8,
+                  background: "#fff",
+                  border: "1px solid #ddd",
+                  borderRadius: 8,
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                  maxWidth: 340,
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  boxSizing: "border-box",
+                  paddingRight: 6
+                }}>
+                  {EMOJIS.map((e, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => insertEmoji(e)}
+                      style={{
+                        fontSize: 18,
+                        width: 30,
+                        height: 30,
+                        padding: 0,
+                        margin: 0,
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        lineHeight: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                      aria-label={`emoji-${idx}`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
