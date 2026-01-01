@@ -122,21 +122,21 @@ export default function ChatBox({ username }) {
       alert("No file selected");
       return;
     }
-    
+
     setSending(true);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("sender", username);
+    formData.append("upload_preset", "uploads");
+    formData.append("folder", "whatsapp-lite/media");
+    formData.append("public_id", `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`);
 
     try {
-      console.log("📤 Uploading file:", file.name);
-      console.log("🔗 Backend URL:", backendURL);
+      console.log("📤 Uploading file to Cloudinary:", file.name);
       console.log("👤 Sender:", username);
 
-      const res = await fetch(`${backendURL}${resourceBase}/upload`, {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/dxxmwxyzw/upload`, {
         method: "POST",
         body: formData,
-        // Don't set Content-Type header - browser will set it with boundary
       });
 
       console.log("📬 Upload response status:", res.status);
@@ -144,30 +144,47 @@ export default function ChatBox({ username }) {
       if (!res.ok) {
         let errorMsg = `HTTP ${res.status}`;
         try {
-          // Try to read as text first to avoid stream consumption issues
           const text = await res.text();
           try {
-            // Try to parse as JSON if possible
             const error = JSON.parse(text);
-            errorMsg = error.error || error.message || text.substring(0, 200) || errorMsg;
+            errorMsg = error.error?.message || error.message || text.substring(0, 200) || errorMsg;
           } catch {
-            // If not JSON, just use the text
             errorMsg = text.substring(0, 200) || errorMsg;
           }
         } catch (e) {
-          // If text reading fails, just use status code
           console.error("Error reading response:", e);
         }
         throw new Error(errorMsg);
       }
 
       const response = await res.json();
-      console.log("✅ Upload successful:", response.url);
+      console.log("✅ Upload successful:", response.secure_url);
 
-      // Add the media message to chat immediately
-      if (response.message) {
-        setChat((prev) => [...prev, response.message]);
-      }
+      // Create message object
+      const now = new Date();
+      const timestamp = now.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+        timeZone: "Asia/Kolkata",
+      });
+
+      const msg = {
+        type: "file",
+        message: response.secure_url,
+        sender: username,
+        timestamp,
+      };
+
+      // Add to local chat
+      setChat((prev) => [...prev, msg]);
+
+      // Send via socket to backend for persistence
+      socket.emit("send_message", msg);
 
       // Clear preview after successful upload
       setFile(null);
