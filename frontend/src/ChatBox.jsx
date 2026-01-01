@@ -315,27 +315,21 @@ export default function ChatBox({ username }) {
                </div>
              )}
  
-             {/* ===== File Upload (disabled) ===== */}
+             {/* ===== File Upload ===== */}
              <input
                type="file"
                id="file-upload"
                style={{ display: "none" }}
-               disabled
-               onChange={() => {}}
+               onChange={(e) => setFile(e.target.files[0])}
              />
              <span className="tooltip">
-               <label 
-                 htmlFor="file-upload" 
-                 className="upload-label disabled"
-                 style={{ 
-                   pointerEvents: "none",
-                   opacity: 0.6,
-                   cursor: "not-allowed"
-                 }}
+               <label
+                 htmlFor="file-upload"
+                 className="upload-label"
                >
                  📎
                </label>
-               <span className="tooltip-text">KYA PHOTO BHEJEGI APNA 😂</span>
+               <span className="tooltip-text">Attach file</span>
              </span>
  
              {/* ===== Send Button ===== */}
