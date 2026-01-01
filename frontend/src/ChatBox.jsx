@@ -33,23 +33,39 @@ export default function ChatBox({ username }) {
 
   // ✅ Hosted Render backend only
   const backendURL = process.env.REACT_APP_BACKEND_URL || "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
+  const [resourceBase, setResourceBase] = useState("/messages");
 
   // ===== Fetch messages & listen for new ones =====
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(`${backendURL}/messages`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setChat(data);
-      } catch (err) {
-        console.error("Failed to fetch messages:", err);
-        // Retry after 3 seconds
-        setTimeout(fetchMessages, 3000);
+    const detectAndFetchMessages = async () => {
+      // Try root-level routes first, then /api/messages
+      const candidates = ["/messages", "/api/messages"];
+      let ok = false;
+      for (const path of candidates) {
+        try {
+          const res = await fetch(`${backendURL}${path}`);
+          if (!res.ok) {
+            // Not found or server error - try next
+            continue;
+          }
+          const data = await res.json();
+          setChat(data);
+          setResourceBase(path);
+          ok = true;
+          break;
+        } catch (err) {
+          // network / CORS / html responses will be caught here; try next
+          continue;
+        }
+      }
+      if (!ok) {
+        console.error("Failed to reach backend on expected paths");
+        // Retry detection after 3s
+        setTimeout(detectAndFetchMessages, 3000);
       }
     };
 
-    fetchMessages();
+    detectAndFetchMessages();
     
     const handleMessage = (data) => setChat((prev) => [...prev, data]);
     const handleConnect = () => console.log("✅ Connected to server");
@@ -92,33 +108,51 @@ export default function ChatBox({ username }) {
 
   // ===== Send file =====
   const sendFile = async () => {
-    if (!file) return;
+    if (!file) {
+      alert("No file selected");
+      return;
+    }
+    
     setSending(true);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("sender", username);
+
     try {
-      if (!socket.connected) {
-        alert("Connecting to server... Please try again");
-        setSending(false);
-        return;
-      }
-      const res = await fetch(`${backendURL}/upload`, {
+      console.log("📤 Uploading file:", file.name);
+      console.log("🔗 Backend URL:", backendURL);
+      console.log("👤 Sender:", username);
+
+      const res = await fetch(`${backendURL}${resourceBase}/upload`, {
         method: "POST",
-        body: formData
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
       });
+
+      console.log("📬 Upload response status:", res.status);
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(`Upload failed: ${res.status} - ${error.error || "Unknown error"}`);
+        let errorMsg = "Unknown error";
+        try {
+          const error = await res.json();
+          errorMsg = error.error || error.message || `HTTP ${res.status}`;
+        } catch (e) {
+          const text = await res.text();
+          errorMsg = text.substring(0, 200) || `HTTP ${res.status}`;
+        }
+        throw new Error(errorMsg);
       }
+
       const response = await res.json();
+      console.log("✅ Upload successful:", response.url);
+
       // Clear preview after successful upload
       setFile(null);
       setPreviewUrl(null);
-      setSending(false);
     } catch (err) {
-      console.error("File upload error:", err);
-      alert(`Failed to upload file: ${err.message}`);
+      console.error("❌ File upload error:", err);
+      alert(`Failed to upload file:\n${err.message}`);
+    } finally {
       setSending(false);
     }
   };
