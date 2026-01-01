@@ -226,6 +226,70 @@
   transform: scale(1.2);
 }
 
+/* === File Preview === */
+.file-preview {
+  padding: 12px;
+  border-top: 1px solid #f0f0f0;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-media {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-info {
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.preview-send-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #075e54;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.preview-send-btn:hover:not(:disabled) {
+  background: #064c42;
+}
+
+.preview-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.preview-cancel-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.preview-cancel-btn:hover {
+  background: #f0f0f0;
+}
+
 /* === Responsive Layout === */
 @media (max-width: 900px) {
   .send-btn {

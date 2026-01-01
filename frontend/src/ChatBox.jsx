@@ -27,11 +27,12 @@ export default function ChatBox({ username }) {
   const [chat, setChat] = useState([]);
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const endRef = useRef();
 
   // ✅ Hosted Render backend only
-  const backendURL = "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
+  const backendURL = process.env.REACT_APP_BACKEND_URL || "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
 
   // ===== Fetch messages & listen for new ones =====
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function ChatBox({ username }) {
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
     };
-  }, []);
+  }, [backendURL]);
 
   // ===== Send text message =====
   const sendMessage = async () => {
@@ -95,21 +96,29 @@ export default function ChatBox({ username }) {
     setSending(true);
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("sender", username);
     try {
       if (!socket.connected) {
         alert("Connecting to server... Please try again");
+        setSending(false);
         return;
       }
-      const res = await fetch(`${backendURL}/upload`, { 
-        method: "POST", 
-        body: formData 
+      const res = await fetch(`${backendURL}/upload`, {
+        method: "POST",
+        body: formData
       });
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(`Upload failed: ${res.status} - ${error.error || "Unknown error"}`);
+      }
+      const response = await res.json();
+      // Clear preview after successful upload
       setFile(null);
+      setPreviewUrl(null);
+      setSending(false);
     } catch (err) {
       console.error("File upload error:", err);
-      alert("Failed to upload file");
-    } finally {
+      alert(`Failed to upload file: ${err.message}`);
       setSending(false);
     }
   };
@@ -118,6 +127,17 @@ export default function ChatBox({ username }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
+
+  // ===== Handle file selection and preview =====
+  useEffect(() => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [file]);
 
   // ===== Add emoji to message =====
   const insertEmoji = (emojiChar) => {
@@ -174,6 +194,27 @@ export default function ChatBox({ username }) {
             <div ref={endRef}></div>
           </div>
         </div>
+
+        {/* ===== File Preview ===== */}
+        {previewUrl && (
+          <div className="file-preview">
+            {file.type.startsWith("image/") ? (
+              <img src={previewUrl} alt="Preview" className="preview-media" />
+            ) : file.type.startsWith("video/") ? (
+              <video src={previewUrl} controls className="preview-media" />
+            ) : (
+              <div className="file-info">📄 {file.name}</div>
+            )}
+            <div className="preview-actions">
+              <button onClick={sendFile} disabled={sending} className="preview-send-btn">
+                {sending ? "Sending..." : "Send"}
+              </button>
+              <button onClick={() => { setFile(null); setPreviewUrl(null); }} className="preview-cancel-btn">
+                Remove
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ===== Input Footer ===== */}
         <div className="chat-footer">
@@ -260,11 +301,11 @@ export default function ChatBox({ username }) {
             {/* ===== Send Button ===== */}
             <button
               className={`send-btn ${sending ? "sending" : ""}`}
-              onClick={file ? sendFile : sendMessage}
-              disabled={sending || (!message.trim() && !file)}
+              onClick={sendMessage}
+              disabled={sending || !message.trim()}
             >
               <span className="pulse"></span>
-              {sending ? "..." : file ? "Send File" : "Send"}
+              {sending ? "..." : "Send"}
             </button>
           </div>
         </div>
