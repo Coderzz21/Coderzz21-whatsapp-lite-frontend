@@ -156,6 +156,11 @@ export default function ChatBox({ username }) {
       const response = await res.json();
       console.log("✅ Upload successful:", response.url);
 
+      // Add the media message to chat immediately
+      if (response.message) {
+        setChat((prev) => [...prev, response.message]);
+      }
+
       // Clear preview after successful upload
       setFile(null);
       setPreviewUrl(null);
@@ -240,7 +245,37 @@ export default function ChatBox({ username }) {
         </div>
 
         {/* ===== File Preview ===== */}
-        {/* Media sending disabled: preview and send controls removed */}
+        {previewUrl && (
+          <div className="file-preview-section">
+            {file && file.type.startsWith("image/") && (
+              <img src={previewUrl} alt="preview" className="file-preview-img" />
+            )}
+            {file && file.type.startsWith("video/") && (
+              <video src={previewUrl} controls className="file-preview-video" />
+            )}
+            {file && !file.type.startsWith("image/") && !file.type.startsWith("video/") && (
+              <div className="file-preview-info">
+                📄 {file.name}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => { setFile(null); setPreviewUrl(null); }}
+                className="cancel-btn"
+                disabled={sending}
+              >
+                ✕ Cancel
+              </button>
+              <button
+                onClick={sendFile}
+                className={`send-file-btn ${sending ? "sending" : ""}`}
+                disabled={sending}
+              >
+                {sending ? "Uploading..." : "📤 Send Media"}
+              </button>
+            </div>
+          </div>
+        )}
  
         {/* ===== Input Footer ===== */}
          <div className="chat-footer">
