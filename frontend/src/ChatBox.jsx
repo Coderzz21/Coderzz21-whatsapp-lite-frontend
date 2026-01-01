@@ -142,13 +142,21 @@ export default function ChatBox({ username }) {
       console.log("📬 Upload response status:", res.status);
 
       if (!res.ok) {
-        let errorMsg = "Unknown error";
+        let errorMsg = `HTTP ${res.status}`;
         try {
-          const error = await res.json();
-          errorMsg = error.error || error.message || `HTTP ${res.status}`;
-        } catch (e) {
+          // Try to read as text first to avoid stream consumption issues
           const text = await res.text();
-          errorMsg = text.substring(0, 200) || `HTTP ${res.status}`;
+          try {
+            // Try to parse as JSON if possible
+            const error = JSON.parse(text);
+            errorMsg = error.error || error.message || text.substring(0, 200) || errorMsg;
+          } catch {
+            // If not JSON, just use the text
+            errorMsg = text.substring(0, 200) || errorMsg;
+          }
+        } catch (e) {
+          // If text reading fails, just use status code
+          console.error("Error reading response:", e);
         }
         throw new Error(errorMsg);
       }
