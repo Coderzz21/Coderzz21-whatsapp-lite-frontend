@@ -327,7 +327,11 @@ export default function ChatBox({ username }) {
                <label 
                  htmlFor="file-upload" 
                  className="upload-label disabled"
-                 style={{ pointerEvents: "none" }}
+                 style={{ 
+                   pointerEvents: "none",
+                   opacity: 0.6,
+                   cursor: "not-allowed"
+                 }}
                >
                  📎
                </label>
