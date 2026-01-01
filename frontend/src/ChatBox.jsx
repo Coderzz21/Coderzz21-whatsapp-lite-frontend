@@ -34,6 +34,7 @@ export default function ChatBox({ username }) {
   // ✅ Hosted Render backend only
   const backendURL = process.env.REACT_APP_BACKEND_URL || "https://coderzz21-whatsapp-lite-backend-1.onrender.com";
   const [resourceBase, setResourceBase] = useState("/messages");
+  const [uploadPath, setUploadPath] = useState("/upload");
 
   // ===== Fetch messages & listen for new ones =====
   useEffect(() => {
@@ -65,8 +66,17 @@ export default function ChatBox({ username }) {
       }
     };
 
-    detectAndFetchMessages();
-    
+    const detectUploadPath = async (base) => {
+      // Skip CORS preflight check - use default upload path
+      setUploadPath(`${base}/upload`);
+    };
+
+    // Invoke async init function instead of using top-level await
+    (async () => {
+      await detectAndFetchMessages();
+      await detectUploadPath(resourceBase);
+    })();
+
     const handleMessage = (data) => setChat((prev) => [...prev, data]);
     const handleConnect = () => console.log("✅ Connected to server");
     const handleDisconnect = () => console.log("❌ Disconnected from server");
@@ -230,120 +240,112 @@ export default function ChatBox({ username }) {
         </div>
 
         {/* ===== File Preview ===== */}
-        {previewUrl && (
-          <div className="file-preview">
-            {file.type.startsWith("image/") ? (
-              <img src={previewUrl} alt="Preview" className="preview-media" />
-            ) : file.type.startsWith("video/") ? (
-              <video src={previewUrl} controls className="preview-media" />
-            ) : (
-              <div className="file-info">📄 {file.name}</div>
-            )}
-            <div className="preview-actions">
-              <button onClick={sendFile} disabled={sending} className="preview-send-btn">
-                {sending ? "Sending..." : "Send"}
-              </button>
-              <button onClick={() => { setFile(null); setPreviewUrl(null); }} className="preview-cancel-btn">
-                Remove
-              </button>
-            </div>
-          </div>
-        )}
-
+        {/* Media sending disabled: preview and send controls removed */}
+ 
         {/* ===== Input Footer ===== */}
-        <div className="chat-footer">
-          <div className="input-area">
-            <textarea
-              value={message}
-              placeholder="Type a message... (Shift+Enter for newline)"
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-            />
-          </div>
-
-          {/* ===== Emoji Picker Toggle ===== */}
-          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              style={{
-                fontSize: "22px",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              😊
-            </button>
-            {showEmojiPicker && (
-              <div style={{ position: "absolute", bottom: "60px", right: "0", width: 340, zIndex: 50 }}>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(8, 30px)",
-                  gap: 6,
-                  padding: 8,
-                  background: "#fff",
-                  border: "1px solid #ddd",
-                  borderRadius: 8,
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                  maxWidth: 340,
-                  maxHeight: 220,
-                  overflowY: "auto",
-                  boxSizing: "border-box",
-                  paddingRight: 6
-                }}>
-                  {EMOJIS.map((e, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => insertEmoji(e)}
-                      style={{
-                        fontSize: 18,
-                        width: 30,
-                        height: 30,
-                        padding: 0,
-                        margin: 0,
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        lineHeight: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                      }}
-                      aria-label={`emoji-${idx}`}
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ===== File Upload ===== */}
-            <input
-              type="file"
-              id="file-upload"
-              style={{ display: "none" }}
-              onChange={(e) => setFile(e.target.files[0])}
-            />
-            <label htmlFor="file-upload" className="upload-label">📎</label>
-
-            {/* ===== Send Button ===== */}
-            <button
-              className={`send-btn ${sending ? "sending" : ""}`}
-              onClick={sendMessage}
-              disabled={sending || !message.trim()}
-            >
-              <span className="pulse"></span>
-              {sending ? "..." : "Send"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+         <div className="chat-footer">
+           <div className="input-area">
+             <textarea
+               value={message}
+               placeholder="Type a message... (Shift+Enter for newline)"
+               onChange={(e) => setMessage(e.target.value)}
+               onKeyDown={(e) => {
+                 if (e.key === "Enter" && !e.shiftKey) {
+                   e.preventDefault();
+                   sendMessage();
+                 }
+               }}
+             />
+           </div>
+ 
+           {/* ===== Emoji Picker Toggle ===== */}
+           <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
+             <button
+               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+               style={{
+                 fontSize: "22px",
+                 background: "none",
+                 border: "none",
+                 cursor: "pointer",
+               }}
+             >
+               😊
+             </button>
+             {showEmojiPicker && (
+               <div style={{ position: "absolute", bottom: "60px", right: "0", width: 340, zIndex: 50 }}>
+                 <div style={{
+                   display: "grid",
+                   gridTemplateColumns: "repeat(8, 30px)",
+                   gap: 6,
+                   padding: 8,
+                   background: "#fff",
+                   border: "1px solid #ddd",
+                   borderRadius: 8,
+                   boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+                   maxWidth: 340,
+                   maxHeight: 220,
+                   overflowY: "auto",
+                   boxSizing: "border-box",
+                   paddingRight: 6
+                 }}>
+                   {EMOJIS.map((e, idx) => (
+                     <button
+                       key={idx}
+                       onClick={() => insertEmoji(e)}
+                       style={{
+                         fontSize: 18,
+                         width: 30,
+                         height: 30,
+                         padding: 0,
+                         margin: 0,
+                         background: "none",
+                         border: "none",
+                         cursor: "pointer",
+                         lineHeight: 1,
+                         display: "flex",
+                         alignItems: "center",
+                         justifyContent: "center"
+                       }}
+                       aria-label={`emoji-${idx}`}
+                     >
+                       {e}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+             )}
+ 
+             {/* ===== File Upload (disabled) ===== */}
+             <input
+               type="file"
+               id="file-upload"
+               style={{ display: "none" }}
+               disabled
+               onChange={() => {}}
+             />
+             <span className="tooltip">
+               <label 
+                 htmlFor="file-upload" 
+                 className="upload-label disabled"
+                 style={{ pointerEvents: "none" }}
+               >
+                 📎
+               </label>
+               <span className="tooltip-text">KYA PHOTO BHEJEGI APNA 😂</span>
+             </span>
+ 
+             {/* ===== Send Button ===== */}
+             <button
+               className={`send-btn ${sending ? "sending" : ""}`}
+               onClick={sendMessage}
+               disabled={sending || !message.trim()}
+             >
+               <span className="pulse"></span>
+               {sending ? "..." : "Send"}
+             </button>
+           </div>
+         </div>
+       </div>
+     </div>
+   );
+ }

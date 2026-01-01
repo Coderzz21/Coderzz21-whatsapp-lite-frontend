@@ -226,6 +226,13 @@
   transform: scale(1.2);
 }
 
+/* make disabled upload icon visually inactive but still hoverable via tooltip wrapper */
+.upload-label.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  user-select: none;
+}
+
 /* === File Preview === */
 .file-preview {
   padding: 12px;
@@ -271,23 +278,40 @@
 }
 
 .preview-send-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  pointer-events: auto; /* keep wrapper hover active */
 }
 
-.preview-cancel-btn {
-  padding: 8px 16px;
+/* === Tooltip === */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: max-content;
+  max-width: 220px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  text-align: center;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #fff;
-  color: #333;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  padding: 6px 8px;
+  position: absolute;
+  bottom: 130%;
+  right: 0;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.15s ease, visibility 0.15s;
+  white-space: nowrap;
+  font-size: 13px;
 }
 
-.preview-cancel-btn:hover {
-  background: #f0f0f0;
+.tooltip:hover .tooltip-text,
+.tooltip:focus-within .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 /* === Responsive Layout === */
