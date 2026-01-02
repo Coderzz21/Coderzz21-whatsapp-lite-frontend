@@ -29,7 +29,6 @@ export default function ChatBox({ username }) {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null);
   const endRef = useRef();
 
   // ✅ Hosted Render backend only
@@ -106,18 +105,8 @@ export default function ChatBox({ username }) {
         setSending(false);
         return;
       }
-      if (replyingTo) {
-        socket.emit("send_reply", { 
-          sender: username, 
-          message, 
-          type: "text",
-          replyToId: replyingTo.id
-        });
-      } else {
-        socket.emit("send_message", { sender: username, message, type: "text" });
-      }
+      socket.emit("send_message", { sender: username, message, type: "text" });
       setMessage("");
-      setReplyingTo(null);
       await new Promise((r) => setTimeout(r, 200));
     } catch (err) {
       console.error("Send error:", err);
@@ -274,36 +263,12 @@ export default function ChatBox({ username }) {
               const isMe = msg.sender === username;
               return (
                 <div key={msg.id || i}>
-                  {/* Reply Preview */}
-                  {msg.replyTo && (
-                    <div className={`reply-preview ${isMe ? "outgoing" : "incoming"}`}>
-                      <div className="reply-indicator">↩️ Replying to {msg.replyTo.sender}</div>
-                      <div className="reply-content">
-                        {msg.replyTo.type === "file" ? "📎 " : ""}{msg.replyTo.message?.substring(0, 50)}...
-                      </div>
-                    </div>
-                  )}
-                  
                   <div className={`msg-row ${isMe ? "outgoing" : "incoming"}`}>
                     <div className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}>
                       {renderMessageContent(msg)}
                       {msg.deleted && <span className="deleted-text">[Message Deleted]</span>}
                     </div>
-                    
-                    {/* Message Actions */}
-                    <div className={`msg-actions ${isMe ? "outgoing" : "incoming"}`}>
-                      {!msg.deleted && (
-                        <button 
-                          className="action-btn reply-btn"
-                          onClick={() => setReplyingTo(msg)}
-                          title="Reply"
-                        >
-                          ↩️
-                        </button>
-                      )}
-                    </div>
                   </div>
-                  
                   <div className="meta">
                     {msg.sender} • {formatTimestamp(msg.timestamp)}
                   </div>
@@ -349,23 +314,6 @@ export default function ChatBox({ username }) {
  
         {/* ===== Input Footer ===== */}
          <div className="chat-footer">
-           {/* ===== Reply Preview ===== */}
-           {replyingTo && (
-             <div className="reply-input-preview">
-               <div className="reply-info">
-                 ↩️ Replying to <strong>{replyingTo.sender}</strong>
-               </div>
-               <div className="reply-preview-text">
-                 {replyingTo.type === "file" ? "📎 " : ""}{replyingTo.message?.substring(0, 50)}...
-               </div>
-               <button 
-                 className="clear-reply-btn"
-                 onClick={() => setReplyingTo(null)}
-               >
-                 ✕
-               </button>
-             </div>
-           )}
            
            <div className="input-area">
              <textarea
