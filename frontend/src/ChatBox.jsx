@@ -30,7 +30,6 @@ export default function ChatBox({ username }) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
-  const [showReactionPickerFor, setShowReactionPickerFor] = useState(null);
   const endRef = useRef();
 
   // ✅ Hosted Render backend only
@@ -83,38 +82,17 @@ export default function ChatBox({ username }) {
     const handleConnect = () => console.log("✅ Connected to server");
     const handleDisconnect = () => console.log("❌ Disconnected from server");
     const handleConnectError = (err) => console.error("Connection error:", err);
-    const handleMessageDeleted = (data) => {
-      setChat((prev) =>
-        prev.map((m) => (m.id === data.messageId ? { ...m, deleted: true, message: "[Message Deleted]" } : m))
-      );
-    };
-    const handleReactionAdded = (data) => {
-      setChat((prev) =>
-        prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m))
-      );
-    };
-    const handleReactionRemoved = (data) => {
-      setChat((prev) =>
-        prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m))
-      );
-    };
 
     socket.on("receive_message", handleMessage);
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
-    socket.on("message_deleted", handleMessageDeleted);
-    socket.on("reaction_added", handleReactionAdded);
-    socket.on("reaction_removed", handleReactionRemoved);
     
     return () => {
       socket.off("receive_message", handleMessage);
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
-      socket.off("message_deleted", handleMessageDeleted);
-      socket.off("reaction_added", handleReactionAdded);
-      socket.off("reaction_removed", handleReactionRemoved);
     };
   }, [backendURL]);
 
@@ -237,20 +215,10 @@ export default function ChatBox({ username }) {
     }
   };
 
-  // ===== Add reaction =====
-  const addReaction = (messageId, emoji) => {
-    socket.emit("add_reaction", { messageId, reaction: emoji, username });
-    setShowReactionPickerFor(null);
-  };
-
-  // ===== Remove reaction =====
-  const removeReaction = (messageId, emoji) => {
-    socket.emit("remove_reaction", { messageId, reaction: emoji, username });
-  };
-
-  // ===== Check if user already reacted =====
-  const userHasReacted = (reactions, emoji) => {
-    return reactions && reactions.some(r => r.emoji === emoji && r.user === username);
+  // ===== Add emoji to message =====
+  const insertEmoji = (emojiChar) => {
+    setMessage((prev) => prev + emojiChar);
+    setShowEmojiPicker(false);
   };
 
   // ===== Auto-scroll =====
@@ -328,78 +296,18 @@ export default function ChatBox({ username }) {
                       {msg.deleted && <span className="deleted-text">[Message Deleted]</span>}
                     </div>
                     
-                    {/* Reactions Display */}
-                    {msg.reactions && msg.reactions.length > 0 && (
-                      <div className="reactions-display">
-                        {Object.entries(
-                          msg.reactions.reduce((acc, r) => {
-                            acc[r.emoji] = (acc[r.emoji] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).map(([emoji, count]) => (
-                          <button
-                            key={emoji}
-                            className={`reaction-badge ${userHasReacted(msg.reactions, emoji) ? 'my-reaction' : ''}`}
-                            onClick={() => {
-                              if (userHasReacted(msg.reactions, emoji)) {
-                                removeReaction(msg.id, emoji);
-                              } else {
-                                addReaction(msg.id, emoji);
-                              }
-                            }}
-                            title={msg.reactions.filter(r => r.emoji === emoji).map(r => r.user).join(', ')}
-                          >
-                            {emoji} {count}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    
                     {/* Message Actions */}
                     <div className={`msg-actions ${isMe ? "outgoing" : "incoming"}`}>
                       {!msg.deleted && (
-                        <>
-                          <button 
-                            className="action-btn reaction-btn"
-                            onClick={() => setShowReactionPickerFor(msg.id === showReactionPickerFor ? null : msg.id)}
-                            title="Add reaction"
-                          >
-                            😊
-                          </button>
-                          <button 
-                            className="action-btn reply-btn"
-                            onClick={() => setReplyingTo(msg)}
-                            title="Reply"
-                          >
-                            ↩️
-                          </button>
-                          {isMe && (
-                            <button 
-                              className="action-btn delete-btn"
-                              onClick={() => deleteMessage(msg.id, msg.sender)}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
-                          )}
-                        </>
+                        <button 
+                          className="action-btn reply-btn"
+                          onClick={() => setReplyingTo(msg)}
+                          title="Reply"
+                        >
+                          ↩️
+                        </button>
                       )}
                     </div>
-                    
-                    {/* Reaction Picker */}
-                    {showReactionPickerFor === msg.id && (
-                      <div className="reaction-picker">
-                        {EMOJIS.map((emoji, idx) => (
-                          <button
-                            key={idx}
-                            className="reaction-picker-btn"
-                            onClick={() => addReaction(msg.id, emoji)}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   
                   <div className="meta">
