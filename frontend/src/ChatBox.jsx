@@ -29,6 +29,8 @@ export default function ChatBox({ username }) {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [showReactionPickerFor, setShowReactionPickerFor] = useState(null);
   const endRef = useRef();
 
   // ✅ Hosted Render backend only
@@ -81,17 +83,38 @@ export default function ChatBox({ username }) {
     const handleConnect = () => console.log("✅ Connected to server");
     const handleDisconnect = () => console.log("❌ Disconnected from server");
     const handleConnectError = (err) => console.error("Connection error:", err);
+    const handleMessageDeleted = (data) => {
+      setChat((prev) =>
+        prev.map((m) => (m.id === data.messageId ? { ...m, deleted: true, message: "[Message Deleted]" } : m))
+      );
+    };
+    const handleReactionAdded = (data) => {
+      setChat((prev) =>
+        prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m))
+      );
+    };
+    const handleReactionRemoved = (data) => {
+      setChat((prev) =>
+        prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m))
+      );
+    };
 
     socket.on("receive_message", handleMessage);
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
+    socket.on("message_deleted", handleMessageDeleted);
+    socket.on("reaction_added", handleReactionAdded);
+    socket.on("reaction_removed", handleReactionRemoved);
     
     return () => {
       socket.off("receive_message", handleMessage);
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
+      socket.off("message_deleted", handleMessageDeleted);
+      socket.off("reaction_added", handleReactionAdded);
+      socket.off("reaction_removed", handleReactionRemoved);
     };
   }, [backendURL]);
 
@@ -105,8 +128,18 @@ export default function ChatBox({ username }) {
         setSending(false);
         return;
       }
-      socket.emit("send_message", { sender: username, message, type: "text" });
+      if (replyingTo) {
+        socket.emit("send_reply", { 
+          sender: username, 
+          message, 
+          type: "text",
+          replyToId: replyingTo.id
+        });
+      } else {
+        socket.emit("send_message", { sender: username, message, type: "text" });
+      }
       setMessage("");
+      setReplyingTo(null);
       await new Promise((r) => setTimeout(r, 200));
     } catch (err) {
       console.error("Send error:", err);
@@ -197,6 +230,29 @@ export default function ChatBox({ username }) {
     }
   };
 
+  // ===== Delete message =====
+  const deleteMessage = (messageId, sender) => {
+    if (sender === username) {
+      socket.emit("delete_message", { messageId, sender: username });
+    }
+  };
+
+  // ===== Add reaction =====
+  const addReaction = (messageId, emoji) => {
+    socket.emit("add_reaction", { messageId, reaction: emoji, username });
+    setShowReactionPickerFor(null);
+  };
+
+  // ===== Remove reaction =====
+  const removeReaction = (messageId, emoji) => {
+    socket.emit("remove_reaction", { messageId, reaction: emoji, username });
+  };
+
+  // ===== Check if user already reacted =====
+  const userHasReacted = (reactions, emoji) => {
+    return reactions && reactions.some(r => r.emoji === emoji && r.user === username);
+  };
+
   // ===== Auto-scroll =====
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -255,10 +311,97 @@ export default function ChatBox({ username }) {
             {chat.map((msg, i) => {
               const isMe = msg.sender === username;
               return (
-                <div key={i} className={`msg-row ${isMe ? "outgoing" : "incoming"}`}>
-                  <div className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}>
-                    {renderMessageContent(msg)}
+                <div key={msg.id || i}>
+                  {/* Reply Preview */}
+                  {msg.replyTo && (
+                    <div className={`reply-preview ${isMe ? "outgoing" : "incoming"}`}>
+                      <div className="reply-indicator">↩️ Replying to {msg.replyTo.sender}</div>
+                      <div className="reply-content">
+                        {msg.replyTo.type === "file" ? "📎 " : ""}{msg.replyTo.message?.substring(0, 50)}...
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className={`msg-row ${isMe ? "outgoing" : "incoming"}`}>
+                    <div className={`bubble ${isMe ? "outgoing" : "incoming"} visible`}>
+                      {renderMessageContent(msg)}
+                      {msg.deleted && <span className="deleted-text">[Message Deleted]</span>}
+                    </div>
+                    
+                    {/* Reactions Display */}
+                    {msg.reactions && msg.reactions.length > 0 && (
+                      <div className="reactions-display">
+                        {Object.entries(
+                          msg.reactions.reduce((acc, r) => {
+                            acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                            return acc;
+                          }, {})
+                        ).map(([emoji, count]) => (
+                          <button
+                            key={emoji}
+                            className={`reaction-badge ${userHasReacted(msg.reactions, emoji) ? 'my-reaction' : ''}`}
+                            onClick={() => {
+                              if (userHasReacted(msg.reactions, emoji)) {
+                                removeReaction(msg.id, emoji);
+                              } else {
+                                addReaction(msg.id, emoji);
+                              }
+                            }}
+                            title={msg.reactions.filter(r => r.emoji === emoji).map(r => r.user).join(', ')}
+                          >
+                            {emoji} {count}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Message Actions */}
+                    <div className={`msg-actions ${isMe ? "outgoing" : "incoming"}`}>
+                      {!msg.deleted && (
+                        <>
+                          <button 
+                            className="action-btn reaction-btn"
+                            onClick={() => setShowReactionPickerFor(msg.id === showReactionPickerFor ? null : msg.id)}
+                            title="Add reaction"
+                          >
+                            😊
+                          </button>
+                          <button 
+                            className="action-btn reply-btn"
+                            onClick={() => setReplyingTo(msg)}
+                            title="Reply"
+                          >
+                            ↩️
+                          </button>
+                          {isMe && (
+                            <button 
+                              className="action-btn delete-btn"
+                              onClick={() => deleteMessage(msg.id, msg.sender)}
+                              title="Delete"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Reaction Picker */}
+                    {showReactionPickerFor === msg.id && (
+                      <div className="reaction-picker">
+                        {EMOJIS.map((emoji, idx) => (
+                          <button
+                            key={idx}
+                            className="reaction-picker-btn"
+                            onClick={() => addReaction(msg.id, emoji)}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                  
                   <div className="meta">
                     {msg.sender} • {formatTimestamp(msg.timestamp)}
                   </div>
@@ -304,6 +447,24 @@ export default function ChatBox({ username }) {
  
         {/* ===== Input Footer ===== */}
          <div className="chat-footer">
+           {/* ===== Reply Preview ===== */}
+           {replyingTo && (
+             <div className="reply-input-preview">
+               <div className="reply-info">
+                 ↩️ Replying to <strong>{replyingTo.sender}</strong>
+               </div>
+               <div className="reply-preview-text">
+                 {replyingTo.type === "file" ? "📎 " : ""}{replyingTo.message?.substring(0, 50)}...
+               </div>
+               <button 
+                 className="clear-reply-btn"
+                 onClick={() => setReplyingTo(null)}
+               >
+                 ✕
+               </button>
+             </div>
+           )}
+           
            <div className="input-area">
              <textarea
                value={message}

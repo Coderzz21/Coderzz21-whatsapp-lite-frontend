@@ -457,3 +457,186 @@
 .send-file-btn.sending {
   background: #0a7360;
 }
+
+/* === Message Actions === */
+.msg-actions {
+  display: none;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.msg-row:hover .msg-actions {
+  display: flex;
+}
+
+.action-btn {
+  background: rgba(7, 94, 84, 0.1);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: #075e54;
+}
+
+.action-btn:hover {
+  background: rgba(7, 94, 84, 0.2);
+  transform: scale(1.1);
+}
+
+.delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* === Deleted Message === */
+.deleted-text {
+  font-style: italic;
+  color: #9ca3af;
+}
+
+/* === Reactions Display === */
+.reactions-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.reaction-badge {
+  background: rgba(7, 94, 84, 0.08);
+  border: 1px solid rgba(7, 94, 84, 0.2);
+  padding: 4px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.2s ease;
+  color: #0f172a;
+}
+
+.reaction-badge:hover {
+  background: rgba(7, 94, 84, 0.15);
+  border-color: rgba(7, 94, 84, 0.3);
+}
+
+.reaction-badge.my-reaction {
+  background: rgba(7, 94, 84, 0.2);
+  border-color: rgba(7, 94, 84, 0.4);
+  font-weight: 600;
+}
+
+/* === Reaction Picker === */
+.reaction-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 28px);
+  gap: 6px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #e6e9ee;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  bottom: -120px;
+  left: 0;
+  z-index: 100;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.reaction-picker-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.reaction-picker-btn:hover {
+  background: rgba(7, 94, 84, 0.1);
+  transform: scale(1.2);
+}
+
+/* === Reply Preview in Message === */
+.reply-preview {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: rgba(7, 94, 84, 0.05);
+  border-left: 3px solid #075e54;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.reply-preview.outgoing {
+  margin-left: auto;
+  max-width: 78%;
+}
+
+.reply-preview.incoming {
+  margin-right: auto;
+  max-width: 78%;
+}
+
+.reply-indicator {
+  color: #075e54;
+  font-weight: 600;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.reply-content {
+  color: #6b7280;
+  font-size: 12px;
+  word-break: break-word;
+}
+
+/* === Reply Input Preview === */
+.reply-input-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(7, 94, 84, 0.05);
+  border-left: 3px solid #075e54;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.reply-info {
+  flex: 1;
+  color: #075e54;
+  font-weight: 600;
+}
+
+.reply-preview-text {
+  flex: 1;
+  color: #6b7280;
+  font-size: 12px;
+  word-break: break-word;
+  max-width: 200px;
+}
+
+.clear-reply-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.clear-reply-btn:hover {
+  color: #6b7280;
+}
