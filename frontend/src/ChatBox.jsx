@@ -237,12 +237,6 @@ export default function ChatBox({ username }) {
     }
   }, [file]);
 
-  // ===== Add emoji to message =====
-  const insertEmoji = (emojiChar) => {
-    setMessage((prev) => prev + emojiChar);
-    setShowEmojiPicker(false);
-  };
-
   // ===== Render message content =====
   const renderMessageContent = (msg) => {
     if (msg.type === "file") {
